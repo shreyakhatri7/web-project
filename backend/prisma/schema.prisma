@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  STUDENT
+  EMPLOYER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique @db.VarChar(255)
+  password  String     @db.VarChar(255)
+  role      UserRole   @default(STUDENT)
+  status    UserStatus @default(ACTIVE)
+  
+  // Common fields
+  firstName String     @db.VarChar(100)
+  lastName  String     @db.VarChar(100)
+  phone     String?    @db.VarChar(20)
+  avatar    String?    @db.Text
+  
+  // Student specific fields
+  studentProfile   StudentProfile?
+  
+  // Employer specific fields
+  employerProfile  EmployerProfile?
+  
+  // Admin specific fields (if needed in future)
+  adminProfile     AdminProfile?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastLogin DateTime?
+  
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model StudentProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Student-specific information
+  university      String?  @db.VarChar(255)
+  degree          String?  @db.VarChar(100)
+  major           String?  @db.VarChar(100)
+  graduationYear  Int?
+  gpa             Float?
+  
+  // Professional information
+  skills          String?  @db.Text // JSON array of skills
+  bio             String?  @db.Text
+  resume          String?  @db.Text // URL to resume file
+  portfolio       String?  @db.Text // URL to portfolio
+  linkedIn        String?  @db.VarChar(255)
+  github          String?  @db.VarChar(255)
+  
+  // Address
+  address         String?  @db.Text
+  city            String?  @db.VarChar(100)
+  state           String?  @db.VarChar(100)
+  country         String?  @db.VarChar(100)
+  zipCode         String?  @db.VarChar(20)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("student_profiles")
+}
+
+model EmployerProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Company information
+  companyName     String   @db.VarChar(255)
+  companySize     String?  @db.VarChar(50) // e.g., "1-10", "11-50", "51-200"
+  industry        String?  @db.VarChar(100)
+  website         String?  @db.VarChar(255)
+  description     String?  @db.Text
+  logo            String?  @db.Text // URL to company logo
+  
+  // Contact information
+  contactPerson   String?  @db.VarChar(100)
+  position        String?  @db.VarChar(100)
+  
+  // Address
+  address         String?  @db.Text
+  city            String?  @db.VarChar(100)
+  state           String?  @db.VarChar(100)
+  country         String?  @db.VarChar(100)
+  zipCode         String?  @db.VarChar(20)
+  
+  // Verification
+  isVerified      Boolean  @default(false)
+  verifiedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("employer_profiles")
+}
+
+model AdminProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  department      String?  @db.VarChar(100)
+  permissions     String?  @db.Text // JSON array of permissions
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("admin_profiles")
+}
