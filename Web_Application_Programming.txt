@@ -1,0 +1,479 @@
+TRIBHUVAN UNIVERSITY
+INSTITUTE OF ENGINEERING
+Khwopa College Of Engineering
+Libali, Bhaktapur
+Department of Computer Engineering
+A PROPOSAL ON
+INTERNSHIP AND JOB PORTAL SYSTEM
+Submitted in partial fulfillment of the requirements for the
+degree of
+Bachelor of Computer Engineering
+Submitted by
+Rakshyak Pradhananga KCE080BCT024
+Shreya Khatri KCE080BCT038
+Shubham Budhathoki KCE080BCT039
+Suvanjan Dahal KCE080BCT044
+Under the Supervision of
+Er. Sunil Banmala
+Er. Ramesh Prajapati
+Khwopa College of Engineering
+Libali, Bhaktapur
+Magh, 2082
+
+Certificate of Approval
+The undersigned certify that the project entitled“Internship and Job Portal System”
+submitted byRakshyak Pradhananga, Shreya Khatri, Shubham Budhathoki
+and Suvanjan Dahalto the Department of Computer Engineering, Khwopa College
+of Engineering, in partial fulfillment of the requirements for the degree of Bachelor of
+Computer Engineering, has been carried out under our supervision and is approved for
+submission.
+.............................................
+Er. Sunil Banmala
+(Project Supervisor).............................................
+Er. Ramesh Prajapati
+(Project Supervisor)
+.............................................
+Er. Dinesh Gothe
+Head of Department
+Department of Computer Engineering,
+KhCE
+1
+
+Acknowledgement
+We would like to express our sincere gratitude to our supervisor,Er. Sunil Banmala,
+Er. Ramesh Prajapati, for his valuable guidance, encouragement, and continuous
+support throughout the completion of this project.
+We are also thankful to all the faculty members of the Department of Computer
+Engineering, Khwopa College of Engineering, for their guidance and support during our
+academic journey.
+Finally, we express our heartfelt gratitude to our family and friends for their motiva-
+tion and encouragement.
+Rakshyak Pradhananga KCE080BCT024
+Shreya Khatri KCE080BCT038
+Shubham Budhathoki KCE080BCT039
+Suvanjan Dahal KCE080BCT044
+2
+
+Abstract
+The rapid advancement of digital technologies has significantly transformed the way stu-
+dents and job seekers search for internships and employment opportunities. However, the
+lack of a centralized, reliable, and efficient platform often makes the recruitment process
+time-consuming and unorganized for both applicants and employers.
+This project presents the design and development of anInternship and Job Portal
+Systemthat serves as a unified web-based platform connecting students, job seekers,
+and employers. The system enables employers to post job and internship opportunities,
+while students can create profiles, upload resumes, search for opportunities, and apply
+for suitable positions. Additionally, the platform provides features such as application
+tracking, user management, and administrative control to ensure smooth operation and
+transparency.
+The proposed system aims to enhance accessibility, efficiency, and reliability in the
+recruitment process while supporting students in gaining practical exposure and career
+opportunities. The application is developed using modern web technologies and follows
+a secure and scalable architecture to ensure performance, data integrity, and future ex-
+tensibility.
+Keywords:Internship Portal, Job Portal, Web Application, Recruitment System,
+Database Management
+3
+
+Contents
+1 Introduction 7
+1.1 Background Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.2 Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.3 Problem Definition . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+1.4 Goals and Objectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+1.5 Scope and Applications . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2 Literature Review 9
+2.1 Overview of Job and Internship Portals . . . . . . . . . . . . . . . . . . . 9
+2.2 Existing Systems and Their Limitations . . . . . . . . . . . . . . . . . . 9
+2.3 Proposed System Overview . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+3 Feasibility Study 10
+3.1 Technical Feasibility . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+3.2 Operational Feasibility . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+3.3 Economic Feasibility . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+4 Methodology 11
+4.1 System Development Approach . . . . . . . . . . . . . . . . . . . . . . . 11
+4.2 Requirement Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+4.3 System Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+4.4 Implementation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+4.5 Testing and Validation . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+4.6 Deployment and Maintenance . . . . . . . . . . . . . . . . . . . . . . . . 12
+4.7 System Workflow Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+5 Requirement Analysis 14
+5.1 Software Requirement . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+5.2 Software Requirement . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+5.3 Hardware Requirement . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+5.4 Functional Requirement . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+5.5 Non-Functional Requirement . . . . . . . . . . . . . . . . . . . . . . . . . 15
+6 System Design and Architecture 16
+6.1 System Block Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+6.2 Modules and Components Design . . . . . . . . . . . . . . . . . . . . . . 16
+6.2.1 Student Module . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+6.2.2 Employer Module . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+6.2.3 Admin Module . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+4
+
+6.3 Data Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+6.3.1 Database Schema . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+6.4 System Workflow . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+6.5 Technology Stack . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+6.6 Security and Scalability . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+7 Expected Outcome 24
+8 Conclusion 25
+5
+
+List of Figures
+4.1 System Workflow of Internship and Job Portal . . . . . . . . . . . . . . . 13
+6.1 System Block Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+6.2 Student Functional Flow . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+6.3 Employer Functional Flow . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+6.4 Admin Functional Flow . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+6.5 Database ER Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+6.6 System Workflow Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+6.7 Technology Stack Architecture . . . . . . . . . . . . . . . . . . . . . . . . 22
+6.8 Security and Scalability Architecture . . . . . . . . . . . . . . . . . . . . 23
+6
+
+Chapter 1
+Introduction
+1.1 Background Introduction
+With the rapid advancement of information technology and internet-based systems, digi-
+tal platforms have become an essential part of modern recruitment processes. Traditional
+methods of finding internships and jobs, such as newspaper advertisements, physical no-
+tices, and manual applications, are time-consuming and often inefficient. Students and
+job seekers face difficulties in accessing updated opportunities, while organizations strug-
+gle to reach suitable candidates effectively.
+In recent years, online job portals have emerged as a solution to bridge the gap between
+employers and job seekers. These platforms provide centralized access to job listings,
+application tracking, and communication between employers and applicants. However,
+many existing systems lack transparency, proper filtering, and student-focused internship
+opportunities, especially in academic environments.
+TheInternship and Job Portal Systemaims to address these challenges by pro-
+viding a unified and user-friendly web-based platform. The system connects students,
+companies, and administrators to streamline the process of posting opportunities, apply-
+ing for positions, and managing recruitment activities efficiently and securely.
+1.2 Motivation
+The motivation behind developing this project arises from the increasing difficulty faced
+by students in finding suitable internships and entry-level job opportunities. Many stu-
+dents rely on informal sources such as social media or personal networks, which often lack
+reliability and structured information. This results in missed opportunities and inefficient
+communication between employers and applicants.
+Another major motivation is the need for a centralized and transparent platform that
+ensures equal access to opportunities for all students. By providing verified job postings
+and structured application processes, the system reduces misinformation and improves
+trust between students and organizations.
+Additionally, this project serves as a practical implementation of academic knowledge
+gained in software engineering, database management, and web development. It allows
+students to apply theoretical concepts to solve real-world problems while gaining hands-on
+experience in building scalable and secure systems.
+7
+
+1.3 Problem Definition
+Despite the availability of various online job portals, there is still a lack of systems specif-
+ically designed to address the needs of students and fresh graduates. Existing platforms
+often focus on experienced professionals and do not adequately support internships, aca-
+demic collaboration, or campus-level recruitment.
+The absence of a centralized system leads to scattered job postings, inconsistent ap-
+plication processes, and limited tracking of application status. Students often struggle
+to find relevant opportunities, while employers face difficulties in managing applications
+and identifying suitable candidates efficiently.
+Therefore, the core problem is the lack of an integrated, user-friendly, and reliable in-
+ternship and job portal that effectively connects students, employers, and administrators
+within a single platform while ensuring transparency and efficiency.
+1.4 Goals and Objectives
+The main objectives of this project are:
+•To design and develop a user-friendly Internship and Job Portal System that sim-
+plifies the recruitment process for students and employers.
+•To enable students to create profiles, upload resumes, and apply for suitable job
+and internship opportunities.
+•To provide employers and administrators with tools to manage job postings, appli-
+cations, and user activities efficiently.
+1.5 Scope and Applications
+The major applications of this project are:
+•To provide a centralized platform for managing internships and job opportunities
+for students and organizations.
+•To support educational institutions and companies in organizing recruitment activ-
+ities in a structured and efficient manner.
+•To allow future expansion with advanced features such as skill-based job recom-
+mendations and application tracking.
+8
+
+Chapter 2
+Literature Review
+2.1 Overview of Job and Internship Portals
+Job and internship portals have become an essential part of modern recruitment systems.
+These platforms provide a centralized medium where employers can post job opportunities
+and candidates can search and apply for suitable positions. Popular platforms such as
+LinkedIn, Indeed, and Internshala demonstrate how digital recruitment systems improve
+accessibility, efficiency, and communication between recruiters and job seekers.
+Most existing portals offer features such as user registration, job listings, resume
+uploads, and application tracking. However, many of these platforms focus mainly on
+experienced professionals and often do not cater specifically to students or academic
+institutions. This creates a gap for student-focused recruitment systems.
+2.2 Existing Systems and Their Limitations
+Existing job portal systems provide large-scale recruitment solutions but often lack per-
+sonalization and academic integration. Many platforms have complex interfaces, paid
+access, or limited internship-related opportunities, which can be challenging for students
+and fresh graduates.
+Additionally, most systems do not offer direct administrative control for educational
+institutions. This makes it difficult to verify job postings, track student participation, or
+ensure the authenticity of employers. These limitations highlight the need for a dedicated
+internship and job portal designed specifically for academic environments.
+2.3 Proposed System Overview
+The proposed Internship and Job Portal System focuses on providing a simplified and
+secure platform tailored for students, employers, and administrators. Unlike existing
+systems, it emphasizes academic relevance, verified job postings, and structured commu-
+nication.
+By integrating modern web technologies and role-based access control, the system
+ensures data security, ease of use, and scalability. This approach makes the proposed
+system more suitable for educational institutions and entry-level recruitment.
+9
+
+Chapter 3
+Feasibility Study
+3.1 Technical Feasibility
+The proposed system is technically feasible as it can be developed using widely available
+and well-supported technologies such as React, and backend frameworks such as Node.js
+along with relational databases such as mySQL. These technologies are reliable, scalable,
+and suitable for web-based applications.
+The development team possesses sufficient technical knowledge in web development,
+database management, and system design. Required hardware and software resources are
+easily accessible, making the implementation technically achievable.
+3.2 Operational Feasibility
+Operational feasibility focuses on how well the system will function in a real-world en-
+vironment. The proposed system is designed to be user-friendly, allowing students, em-
+ployers, and administrators to interact with minimal training.
+The system will streamline recruitment processes, reduce manual effort, and improve
+communication between users. Its intuitive interface ensures smooth adoption and effec-
+tive daily operation.
+3.3 Economic Feasibility
+The economic feasibility of the project is high since the system can be developed using
+open-source tools and technologies, minimizing development costs. No expensive hard-
+ware or licensed software is required for deployment.
+Maintenance and operational costs are also low, making the system affordable for
+educational institutions. The long-term benefits of efficient recruitment and improved
+accessibility outweigh the initial development costs.
+10
+
+Chapter 4
+Methodology
+The methodology defines the systematic approach followed in the design and development
+of the Internship and Job Portal System. This chapter explains the overall development
+process, system workflow, and implementation strategy adopted to ensure reliability,
+usability, and scalability of the system.
+4.1 System Development Approach
+The development of the Internship and Job Portal System follows a structured and modu-
+lar approach. The project is divided into multiple phases including requirement analysis,
+system design, implementation, testing, and deployment. Each phase is carefully planned
+to ensure smooth progression and effective outcomes.
+The system follows a web-based client-server architecture where users interact with the
+system through a web interface. The backend handles business logic, database operations,
+and authentication, while the frontend ensures a user-friendly experience.
+4.2 Requirement Analysis
+Requirement analysis is the initial and most important phase of the system development
+process. In this phase, the needs of different users such as students, employers, and
+administrators are identified and analyzed.
+Students require features such as profile creation, resume upload, job search, and
+application tracking. Employers require tools to post job vacancies, manage applica-
+tions, and review candidate profiles. Administrators need access to manage users, verify
+postings, and monitor system activities. These requirements form the foundation of the
+system design.
+4.3 System Design
+Based on the gathered requirements, the system architecture and database structure are
+designed. The system follows a role-based access control mechanism where different users
+have different levels of access and functionalities.
+The system consists of three main components:
+•Frontend: Provides an interactive interface for users to interact with the system.
+11
+
+•Backend: Handles business logic, authentication, and data processing.
+•Database: Stores user information, job postings, applications, and system records.
+4.4 Implementation
+The implementation phase involves converting the system design into a functional appli-
+cation. Frontend development focuses on building responsive and user-friendly interfaces,
+while backend development handles server-side logic and database interactions.
+Standard programming practices are followed to ensure code readability, reusability,
+and security. Authentication mechanisms are implemented to protect user data and
+restrict unauthorized access.
+4.5 Testing and Validation
+After implementation, the system undergoes thorough testing to identify and fix errors.
+Different testing techniques such as unit testing, integration testing, and functional testing
+are performed to ensure system reliability.
+User testing is also conducted to verify usability and performance. Feedback from
+users is analyzed and necessary improvements are made before final deployment.
+4.6 Deployment and Maintenance
+Once testing is completed, the system is deployed on a web server for real-world usage.
+Regular maintenance is planned to update features, fix bugs, and improve performance
+based on user feedback.
+The modular design of the system allows easy scalability and future enhancements
+without major structural changes.
+4.7 System Workflow Diagram
+The following diagram represents the overall workflow of the Internship and Job Portal
+System.
+12
+
+Figure 4.1: System Workflow of Internship and Job Portal
+13
+
+Chapter 5
+Requirement Analysis
+5.1 Software Requirement
+The software requirements for the Internship and Job Portal System are:
+5.2 Software Requirement
+s The software requirements for the Internship and Job Portal System are:
+•A modern web browser (Chrome, Firefox, Edge) for accessing the portal.
+•Backend framework: Node.js for server-side development.
+•Frontend framework: React.js for building interactive user interfaces.
+•Database management system: MySQL for storing user, job, and application data.
+•Text editor / IDE: Visual Studio Code for coding and project management.
+•Web server: Apache or Nginx for hosting the application.
+•Authentication and security: JWT (JSON Web Token) for secure user authentication.
+s
+5.3 Hardware Requirement
+The hardware requirements for the system are:
+•A personal computer or laptop with at least 4 GB RAM and 50 GB free storage.
+•Internet connection for accessing the portal and server deployment.
+•Server machine (for deployment) with at least 8 GB RAM and sufficient storage de-
+pending on user load.
+14
+
+5.4 Functional Requirement
+The functional requirements of the system are:
+•User registration and login for students, employers, and administrators.
+•Student profile creation and resume upload functionality.
+•Job and internship posting, editing, and deletion by employers.
+•Application submission and tracking for students.
+•Admin approval and verification of employers, jobs, and users.
+•Search and filter functionality for jobs and internships.
+•Notification system for application status and new job postings.
+5.5 Non-Functional Requirement
+The non-functional requirements of the system are:
+•Security: User data must be encrypted and protected from unauthorized access.
+•Usability: Interface must be simple, intuitive, and responsive across devices.
+•Reliability: System should be available 24/7 with minimal downtime.
+•Performance: Fast page load times and efficient database queries.
+•Scalability: The system should support increasing number of users and job postings.
+•Maintainability: The codebase should be modular and easy to update or expand.
+15
+
+Chapter 6
+System Design and Architecture
+This chapter describes the overall design, structure, and working mechanism of the In-
+ternship and Job Portal System.
+6.1 System Block Diagram
+The system block diagram presents a high-level overview of the entire system.
+Figure 6.1: System Block Diagram
+6.2 Modules and Components Design
+6.2.1 Student Module
+Registration and Login
+Students can register and log in securely using JWT authentication.
+16
+
+Profile Management
+Students can update their profile and upload resumes.
+Job Application
+Students can apply for jobs and track application status.
+Figure 6.2: Student Functional Flow
+17
+
+6.2.2 Employer Module
+Job Posting
+Employers create and manage job postings.
+Manage Applications
+Employers review and shortlist candidates.
+Figure 6.3: Employer Functional Flow
+18
+
+6.2.3 Admin Module
+Admins approve users and job postings.
+Figure 6.4: Admin Functional Flow
+19
+
+6.3 Data Design
+6.3.1 Database Schema
+Figure 6.5: Database ER Diagram
+20
+
+6.4 System Workflow
+Figure 6.6: System Workflow Diagram
+21
+
+6.5 Technology Stack
+•Frontend: React.js
+•Backend: Node.js with Express.js
+•Database: MySQL
+•Authentication: JWT
+•Web Server: Apache or Nginx
+Figure 6.7: Technology Stack Architecture
+6.6 Security and Scalability
+The system implements role-based access control and scalable architecture.
+22
+
+Figure 6.8: Security and Scalability Architecture
+23
+
+Chapter 7
+Expected Outcome
+The Internship and Job Portal System is designed to provide an efficient, secure, and
+user-friendly platform that connects students, employers, and administrators within a
+single integrated system. The expected outcome of this project is to simplify the process
+of job searching, recruitment, and system management through automation and digital
+transformation.
+The system will allow students to easily register, create profiles, upload resumes,
+search for suitable jobs or internships, and apply directly through the platform. Students
+will also be able to track the status of their applications, making the recruitment process
+more transparent and organized. This reduces the need for manual communication and
+improves accessibility to career opportunities.
+Employers will benefit from a structured platform where they can post job vacancies,
+manage applications, and shortlist candidates efficiently. The system will help employers
+save time by providing filtered and relevant applicant data, making the hiring process
+faster and more reliable. Employers will also be able to manage job postings dynamically,
+ensuring that only active and valid opportunities are visible to students.
+The admin module will ensure overall system control and security. Admins will have
+the authority to verify users, approve job postings, and monitor platform activities. This
+helps maintain data integrity, prevents misuse, and ensures that only legitimate users
+and job listings are available on the platform.
+From a technical perspective, the system is expected to be scalable, secure, and main-
+tainable. The use of modern technologies such as React.js for the frontend, Node.js
+with Express.js for the backend, MySQL for data storage, and JWT for authentication
+ensures high performance and secure data handling. The modular architecture allows
+future enhancements such as analytics dashboards, notification systems, and AI-based
+job recommendations.
+Overall, the Internship and Job Portal System aims to provide a reliable digital so-
+lution that bridges the gap between students and employers, enhances recruitment effi-
+ciency, and supports career development in a structured and user-friendly manner.
+24
+
+Chapter 8
+Conclusion
+The Internship and Job Portal System is proposed as a comprehensive digital solution
+to streamline the process of internship and job searching for students while simplifying
+recruitment for employers. By integrating students, employers, and administrators into
+a single secure platform, the system reduces manual effort, improves transparency, and
+enhances overall efficiency.
+The proposed system ensures ease of use, data security, and scalability through mod-
+ern web technologies and a modular architecture. It effectively bridges the gap between
+academic institutions and industry by providing a structured, reliable, and user-friendly
+environment that supports career development and efficient hiring practices.
+25
+
+Bibliography
+[1] React Documentation, ”React – A JavaScript library for building user interfaces,”
+[Online]. Available: https://reactjs.org/
+[2] Node.js Foundation, ”Node.js Documentation,” [Online]. Available:
+https://nodejs.org/en/docs/
+[3] Express.js, ”Express – Fast, unopinionated, minimalist web framework for Node.js,”
+[Online]. Available: https://expressjs.com/
+[4] Oracle Corporation, ”MySQL 8.0 Reference Manual,” [Online]. Available:
+https://dev.mysql.com/doc/
+[5] JSON Web Token, ”Introduction to JSON Web Tokens,” [Online]. Available:
+https://jwt.io/introduction
+[6] OWASP Foundation, ”OWASP Top 10 – Web Application Security Risks,” [Online].
+Available: https://owasp.org/www-project-top-ten/
+[7] Mozilla Developer Network, ”Web Development Documentation,” [Online]. Available:
+https://developer.mozilla.org/
+[8] Fielding, R., ”Architectural Styles and the Design of Network-based Software Archi-
+tectures,” Ph.D. dissertation, University of California, Irvine, 2000.
+[9] A. K. Sharma, ”Secure Web Application Development Using Node.js,” International
+Journal of Computer Applications, vol. 182, no. 10, 2018.
+26
+
