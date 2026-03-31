@@ -44,12 +44,26 @@ const EmployerAuth = ({ onAuthSuccess }) => {
         setError('');
 
         try {
-            const response = await axios.post('http://localhost:8000/api/employer/login', loginData);
-            
-            localStorage.setItem('employerToken', response.data.token);
-            localStorage.setItem('employerData', JSON.stringify(response.data.employer));
-            
-            onAuthSuccess(response.data.employer);
+            const response = await axios.post('http://localhost:8000/api/auth/login', {
+                ...loginData,
+                expectedRole: 'employer'
+            });
+
+            const user = response.data.user;
+            const token = response.data.token;
+            const employerData = {
+                ...(user.profile || {}),
+                email: user.email
+            };
+
+            // Keep both unified auth keys and legacy employer keys for module compatibility.
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('employerToken', token);
+            localStorage.setItem('employerData', JSON.stringify(employerData));
+            window.dispatchEvent(new Event('auth-change'));
+
+            onAuthSuccess(employerData);
         } catch (error) {
             setError(error.response?.data?.message || 'Login failed');
         } finally {
@@ -69,13 +83,34 @@ const EmployerAuth = ({ onAuthSuccess }) => {
         }
 
         try {
-            const { confirmPassword, ...dataToSend } = registerData;
-            const response = await axios.post('http://localhost:8000/api/employer/register', dataToSend);
-            
-            localStorage.setItem('employerToken', response.data.token);
-            localStorage.setItem('employerData', JSON.stringify(response.data.employer));
-            
-            onAuthSuccess(response.data.employer);
+            const payload = {
+                email: registerData.email,
+                password: registerData.password,
+                role: 'employer',
+                company_name: registerData.company_name,
+                company_description: registerData.company_description,
+                company_location: registerData.address,
+                industry: registerData.industry,
+                company_website: registerData.website_url,
+                contact_phone: registerData.contact_number
+            };
+            const response = await axios.post('http://localhost:8000/api/auth/register', payload);
+
+            const user = response.data.user;
+            const token = response.data.token;
+            const employerData = {
+                ...(user.profile || {}),
+                email: user.email
+            };
+
+            // Keep both unified auth keys and legacy employer keys for module compatibility.
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('employerToken', token);
+            localStorage.setItem('employerData', JSON.stringify(employerData));
+            window.dispatchEvent(new Event('auth-change'));
+
+            onAuthSuccess(employerData);
         } catch (error) {
             setError(error.response?.data?.message || 'Registration failed');
         } finally {

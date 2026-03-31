@@ -1,8 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const { testConnection } = require("./config/db");
+require("./config/db");
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -10,6 +11,7 @@ const studentRoutes = require('./routes/student.routes');
 const jobRoutes = require('./routes/job.routes');
 const applicationRoutes = require('./routes/application.routes');
 const employerRoutes = require('./routes/employer.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
@@ -31,6 +33,7 @@ app.use('/api/students', studentRoutes);    // Student Module
 app.use('/api/jobs', jobRoutes);            // Job Routes (unified)
 app.use('/api/applications', applicationRoutes); // Applications
 app.use('/api/employer', employerRoutes);   // Employer Module (existing)
+app.use('/api/admin', adminRoutes);         // Admin Module
 
 
 // Legacy route support

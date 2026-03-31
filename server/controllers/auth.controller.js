@@ -9,6 +9,19 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 require('dotenv').config();
 
+const getRedirectPathByRole = (role) => {
+  switch (role) {
+    case 'student':
+      return '/dashboard';
+    case 'employer':
+      return '/employer/dashboard';
+    case 'admin':
+      return '/admin/dashboard';
+    default:
+      return '/';
+  }
+};
+
 /**
  * Register a new user (Student or Employer)
  * POST /api/auth/register
@@ -18,6 +31,7 @@ const register = async (req, res) => {
   
   try {
     const { email, password, role, ...profileData } = req.body;
+    const normalizedRole = typeof role === 'string' ? role.toLowerCase() : '';
 
     // Validate required fields
     if (!email || !password || !role) {
@@ -28,7 +42,7 @@ const register = async (req, res) => {
     }
 
     // Validate role (only student and employer can self-register)
-    if (!['student', 'employer'].includes(role)) {
+    if (!['student', 'employer'].includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid role. Must be student or employer.'
@@ -58,14 +72,14 @@ const register = async (req, res) => {
     // Insert into users table
     const [userResult] = await connection.query(
       'INSERT INTO users (email, password, role, status) VALUES (?, ?, ?, ?)',
-      [email, hashedPassword, role, 'active']
+      [email, hashedPassword, normalizedRole, 'active']
     );
 
     const userId = userResult.insertId;
     let profile = null;
 
     // Insert into role-specific table
-    if (role === 'student') {
+    if (normalizedRole === 'student') {
       const { first_name, last_name, phone, university, major, graduation_year, gpa, bio } = profileData;
       
       if (!first_name || !last_name) {
@@ -91,7 +105,7 @@ const register = async (req, res) => {
         major,
         graduation_year
       };
-    } else if (role === 'employer') {
+    } else if (normalizedRole === 'employer') {
       const { company_name, company_description, company_location, industry, contact_name, contact_phone } = profileData;
       
       if (!company_name) {
@@ -125,7 +139,7 @@ const register = async (req, res) => {
         userId: userId,  // Make sure this matches what the middleware expects
         id: userId, 
         email, 
-        role,
+        role: normalizedRole,
         profileId: profile.id,
         status: 'active'
       },
@@ -140,7 +154,7 @@ const register = async (req, res) => {
       user: {
         id: userId,
         email,
-        role,
+        role: normalizedRole,
         profile
       }
     });
@@ -163,13 +177,21 @@ const register = async (req, res) => {
  */
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, expectedRole } = req.body;
+    const normalizedExpectedRole = typeof expectedRole === 'string' ? expectedRole.toLowerCase() : null;
 
     // Validate required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Please provide email and password'
+      });
+    }
+
+    if (normalizedExpectedRole && !['student', 'employer', 'admin'].includes(normalizedExpectedRole)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid expectedRole. Must be student, employer, or admin.'
       });
     }
 
@@ -187,6 +209,14 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
+
+    // Enforce portal role when provided (e.g., admin login page)
+    if (normalizedExpectedRole && user.role !== normalizedExpectedRole) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied for ${normalizedExpectedRole} portal.`
+      });
+    }
 
     // Check if user is blocked
     if (user.status === 'blocked') {
@@ -242,6 +272,16 @@ const login = async (req, res) => {
       }
     }
 
+    // Hard-fail if role record is missing to avoid incomplete privileged accounts.
+    if (!profile && ['student', 'employer', 'admin'].includes(user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Role profile not configured. Please contact support.'
+      });
+    }
+
+    const redirectPath = getRedirectPathByRole(user.role);
+
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -259,6 +299,7 @@ const login = async (req, res) => {
     res.json({
       success: true,
       message: 'Login successful',
+      redirectPath,
       token,
       user: {
         id: user.id,
@@ -276,6 +317,19 @@ const login = async (req, res) => {
       error: error.message
     });
   }
+};
+
+/**
+ * Login endpoint dedicated to admin portal
+ * POST /api/auth/admin/login
+ */
+const adminLogin = async (req, res) => {
+  req.body = {
+    ...req.body,
+    expectedRole: 'admin'
+  };
+
+  return login(req, res);
 };
 
 /**
@@ -416,4 +470,4 @@ const updatePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updatePassword };
+module.exports = { register, login, adminLogin, getMe, updatePassword };

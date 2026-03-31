@@ -88,7 +88,7 @@ web_project/
    DB_HOST=localhost
    DB_USER=your_mysql_username
    DB_PASSWORD=your_mysql_password
-   DB_NAME=job_portal
+   DB_NAME=internship_portal
    JWT_SECRET=your_jwt_secret_key
    NODE_ENV=development
    ```

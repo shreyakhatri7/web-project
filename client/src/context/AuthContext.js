@@ -5,7 +5,7 @@
  * Shared by: All Team Members
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -23,33 +23,98 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    checkAuth();
+  const clearStoredAuth = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('employerToken');
+    localStorage.removeItem('employerData');
   }, []);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const response = await authAPI.getMe();
-        setUser(response.data.user);
-      } catch (err) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
+  const readStoredUser = useCallback(() => {
+    const rawUser = localStorage.getItem('user');
+    if (!rawUser) {
+      return null;
     }
-    setLoading(false);
-  };
 
-  const login = async (email, password) => {
+    try {
+      return JSON.parse(rawUser);
+    } catch (parseError) {
+      localStorage.removeItem('user');
+      return null;
+    }
+  }, []);
+
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    const cachedUser = readStoredUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
+
+    try {
+      const response = await authAPI.getMe();
+      const currentUser = response.data.user;
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      setUser(currentUser);
+      window.dispatchEvent(new Event('auth-change'));
+    } catch (err) {
+      clearStoredAuth();
+      setUser(null);
+    }
+
+    setLoading(false);
+  }, [clearStoredAuth, readStoredUser]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    const syncAuthFromStorage = () => {
+      setUser(readStoredUser());
+    };
+
+    window.addEventListener('storage', syncAuthFromStorage);
+    window.addEventListener('auth-change', syncAuthFromStorage);
+
+    return () => {
+      window.removeEventListener('storage', syncAuthFromStorage);
+      window.removeEventListener('auth-change', syncAuthFromStorage);
+    };
+  }, [readStoredUser]);
+
+  const login = async (emailOrPayload, password, expectedRole) => {
     try {
       setError(null);
-      const response = await authAPI.login({ email, password });
-      const { token, user: userData } = response.data;
+
+      const payload =
+        typeof emailOrPayload === 'object' && emailOrPayload !== null
+          ? { ...emailOrPayload }
+          : { email: emailOrPayload, password };
+
+      if (expectedRole) {
+        payload.expectedRole = expectedRole;
+      }
+
+      const response = expectedRole === 'admin'
+        ? await authAPI.adminLogin(payload)
+        : await authAPI.login(payload);
+
+      const { token, user: userData, redirectPath } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
+      if (userData?.role === 'employer') {
+        localStorage.setItem('employerToken', token);
+      }
       setUser(userData);
-      return { success: true, user: userData };
+      window.dispatchEvent(new Event('auth-change'));
+      return { success: true, user: userData, redirectPath };
     } catch (err) {
       const message = err.response?.data?.message || 'Login failed';
       setError(message);
@@ -64,7 +129,11 @@ export const AuthProvider = ({ children }) => {
       const { token, user: newUser } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(newUser));
+      if (newUser?.role === 'employer') {
+        localStorage.setItem('employerToken', token);
+      }
       setUser(newUser);
+      window.dispatchEvent(new Event('auth-change'));
       return { success: true, user: newUser };
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed';
@@ -74,9 +143,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearStoredAuth();
     setUser(null);
+    window.dispatchEvent(new Event('auth-change'));
   };
 
   const updatePassword = async (currentPassword, newPassword) => {

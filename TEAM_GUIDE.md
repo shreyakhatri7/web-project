@@ -6,7 +6,9 @@ This document provides a guide for all 4 team members to understand the shared c
 
 ---
 
-## Database Schema (`database/schema.sql`)
+## Database Schema (`server/database/schema.sql`)
+
+Use `server/database/schema.sql` as the source of truth for DB setup.
 
 ### Central Authentication (ISA Pattern)
 ```
@@ -24,7 +26,7 @@ users (central auth table)
 ### Setup Database
 ```sql
 -- Run in MySQL
-SOURCE database/schema.sql;
+SOURCE server/database/schema.sql;
 ```
 
 ---
@@ -204,7 +206,7 @@ PORT=5000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
-DB_NAME=job_portal
+DB_NAME=internship_portal
 JWT_SECRET=your_jwt_secret_key
 ```
 

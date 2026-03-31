@@ -77,11 +77,11 @@ const Auth = () => {
     setLoading(true);
     setError('');
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.email, formData.password, 'student');
 
     if (result.success) {
       const from = location.state?.from?.pathname;
-      let redirectPath = from || '/dashboard'; // Always redirect to student dashboard
+      let redirectPath = from || result.redirectPath || '/dashboard';
       
       navigate(redirectPath, { replace: true });
     } else {

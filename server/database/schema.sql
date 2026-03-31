@@ -4,8 +4,8 @@
 -- ============================================
 
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS job_portal;
-USE job_portal;
+CREATE DATABASE IF NOT EXISTS internship_portal;
+USE internship_portal;
 
 -- ============================================
 -- Users Table (Central auth for all roles)
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     skills_required JSON,   -- Array of required skills
     deadline DATE,
     vacancies INT DEFAULT 1,
-    status ENUM('active', 'closed', 'draft', 'pending') DEFAULT 'pending',
+    status ENUM('active', 'inactive', 'expired', 'closed', 'draft', 'pending', 'pending_review') DEFAULT 'pending_review',
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS applications (
     student_id INT NOT NULL,
     cover_letter TEXT,
     resume_url VARCHAR(500),
-    status ENUM('pending', 'reviewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn') DEFAULT 'pending',
+    status ENUM('pending', 'pending_review', 'approved', 'reviewed', 'shortlisted', 'accepted', 'rejected', 'withdrawn') DEFAULT 'pending_review',
     employer_notes TEXT,             -- Recruiter notes (not visible to student)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -183,45 +183,144 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 );
 
 -- ============================================
+-- Notifications Table
+-- System notifications for review and moderation actions
+-- ============================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type ENUM('info', 'success', 'warning', 'error') DEFAULT 'info',
+    is_read BOOLEAN DEFAULT FALSE,
+    metadata JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_is_read (is_read),
+    INDEX idx_created_at (created_at)
+);
+
+-- ============================================
 -- Sample Data for Testing
 -- ============================================
 
--- Insert default admin user (password: admin123)
-INSERT INTO users (email, password, role, status) VALUES
-('admin@jobportal.com', '$2a$10$xIx7Y3J3BE33zXHhLCh.veqJGxuBNCB03v6tu8uT30qd50NfrNC7O', 'admin', 'active');
-
-INSERT INTO admins (user_id, first_name, last_name, permissions) VALUES
-(1, 'System', 'Admin', '["manage_users", "manage_jobs", "manage_employers", "view_reports"]');
-
--- Insert sample employer user (password: employer123)
-INSERT INTO users (email, password, role, status) VALUES
-('employer@techcorp.com', '$2a$10$PW6QNrXmXtdVUi5lceklZeQ88J/PZLfjXjlSi8aVK73wnw2K9cn52', 'employer', 'active');
-
-INSERT INTO employers (user_id, company_name, company_description, company_location, industry, company_size, contact_name, is_verified) VALUES
-(2, 'Tech Corp', 'A leading technology company specializing in software development', 'San Francisco, CA', 'Technology', '201-500', 'John Smith', TRUE);
-
--- Insert sample student user (password: student123)
-INSERT INTO users (email, password, role, status) VALUES
+-- Insert default users (idempotent)
+INSERT IGNORE INTO users (email, password, role, status) VALUES
+('admin@jobportal.com', '$2a$10$xIx7Y3J3BE33zXHhLCh.veqJGxuBNCB03v6tu8uT30qd50NfrNC7O', 'admin', 'active'),
+('employer@techcorp.com', '$2a$10$PW6QNrXmXtdVUi5lceklZeQ88J/PZLfjXjlSi8aVK73wnw2K9cn52', 'employer', 'active'),
 ('student@example.com', '$2a$10$dPZG1CFcVcWRvKcMk6yfw.J1zy6e.4.wCICD8JTnyvU3RTTDkZ3Hy', 'student', 'active');
 
-INSERT INTO students (user_id, first_name, last_name, bio) VALUES
-(3, 'Demo', 'Student', 'A passionate computer engineering student looking for opportunities.');
+-- Insert default admin profile if missing
+INSERT INTO admins (user_id, first_name, last_name, permissions)
+SELECT u.id, 'System', 'Admin', '["manage_users", "manage_jobs", "manage_employers", "view_reports"]'
+FROM users u
+WHERE u.email = 'admin@jobportal.com'
+    AND NOT EXISTS (
+        SELECT 1 FROM admins a WHERE a.user_id = u.id
+    );
 
--- Insert sample jobs
-INSERT INTO jobs (employer_id, title, description, location, job_type, experience_level, salary_min, salary_max, requirements, responsibilities, benefits, skills_required, deadline, vacancies, status, is_approved) VALUES
-(1, 'Software Engineer', 'We are looking for a talented software engineer to join our team.', 'San Francisco, CA', 'full-time', 'mid', 80000, 120000, 
- '["Bachelor''s degree in Computer Science", "3+ years of experience", "Strong problem-solving skills"]',
- '["Design and develop software applications", "Collaborate with teams", "Write clean code"]',
- '["Health insurance", "401(k)", "Flexible hours"]',
- '["JavaScript", "Python", "React", "Node.js"]',
- DATE_ADD(CURDATE(), INTERVAL 30 DAY), 2, 'active', TRUE),
+-- Insert default employer profile if missing
+INSERT INTO employers (user_id, company_name, company_description, company_location, industry, company_size, contact_name, is_verified)
+SELECT u.id, 'Tech Corp', 'A leading technology company specializing in software development', 'San Francisco, CA', 'Technology', '201-500', 'John Smith', TRUE
+FROM users u
+WHERE u.email = 'employer@techcorp.com'
+    AND NOT EXISTS (
+        SELECT 1 FROM employers e WHERE e.user_id = u.id
+    );
 
-(1, 'Frontend Developer Intern', 'Great opportunity for students to learn frontend development.', 'San Francisco, CA', 'internship', 'entry', 1500, 2500,
- '["Currently pursuing CS degree", "Basic HTML/CSS/JS knowledge"]',
- '["Build UI components", "Learn from senior developers"]',
- '["Mentorship", "Flexible schedule", "Potential full-time offer"]',
- '["React", "JavaScript", "CSS", "HTML"]',
- DATE_ADD(CURDATE(), INTERVAL 15 DAY), 3, 'active', TRUE);
+-- Insert default student profile if missing
+INSERT INTO students (user_id, first_name, last_name, bio)
+SELECT u.id, 'Demo', 'Student', 'A passionate computer engineering student looking for opportunities.'
+FROM users u
+WHERE u.email = 'student@example.com'
+    AND NOT EXISTS (
+        SELECT 1 FROM students s WHERE s.user_id = u.id
+    );
+
+-- Insert sample jobs if missing
+INSERT INTO jobs (
+        employer_id,
+        title,
+        description,
+        location,
+        job_type,
+        experience_level,
+        salary_min,
+        salary_max,
+        requirements,
+        responsibilities,
+        benefits,
+        skills_required,
+        deadline,
+        vacancies,
+        status,
+        is_approved
+)
+SELECT
+        e.id,
+        'Software Engineer',
+        'We are looking for a talented software engineer to join our team.',
+        'San Francisco, CA',
+        'full-time',
+        'mid',
+        80000,
+        120000,
+        '["Bachelor''s degree in Computer Science", "3+ years of experience", "Strong problem-solving skills"]',
+        '["Design and develop software applications", "Collaborate with teams", "Write clean code"]',
+        '["Health insurance", "401(k)", "Flexible hours"]',
+        '["JavaScript", "Python", "React", "Node.js"]',
+        DATE_ADD(CURDATE(), INTERVAL 30 DAY),
+        2,
+        'active',
+        TRUE
+FROM employers e
+WHERE e.company_name = 'Tech Corp'
+    AND NOT EXISTS (
+        SELECT 1 FROM jobs j WHERE j.employer_id = e.id AND j.title = 'Software Engineer'
+    );
+
+INSERT INTO jobs (
+        employer_id,
+        title,
+        description,
+        location,
+        job_type,
+        experience_level,
+        salary_min,
+        salary_max,
+        requirements,
+        responsibilities,
+        benefits,
+        skills_required,
+        deadline,
+        vacancies,
+        status,
+        is_approved
+)
+SELECT
+        e.id,
+        'Frontend Developer Intern',
+        'Great opportunity for students to learn frontend development.',
+        'San Francisco, CA',
+        'internship',
+        'entry',
+        1500,
+        2500,
+        '["Currently pursuing CS degree", "Basic HTML/CSS/JS knowledge"]',
+        '["Build UI components", "Learn from senior developers"]',
+        '["Mentorship", "Flexible schedule", "Potential full-time offer"]',
+        '["React", "JavaScript", "CSS", "HTML"]',
+        DATE_ADD(CURDATE(), INTERVAL 15 DAY),
+        3,
+        'active',
+        TRUE
+FROM employers e
+WHERE e.company_name = 'Tech Corp'
+    AND NOT EXISTS (
+        SELECT 1 FROM jobs j WHERE j.employer_id = e.id AND j.title = 'Frontend Developer Intern'
+    );
 
 -- Success message
 SELECT 'Database schema created successfully!' AS message;

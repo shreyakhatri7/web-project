@@ -64,10 +64,10 @@ const applyForJob = async (req, res) => {
       });
     }
 
-    // Create application
+    // Create application in admin-review queue (not visible to employer yet)
     const [result] = await pool.query(
       `INSERT INTO applications (job_id, student_id, cover_letter, resume_url, status) 
-       VALUES (?, ?, ?, ?, 'pending')`,
+       VALUES (?, ?, ?, ?, 'pending_review')`,
       [job_id, student_id, cover_letter || null, resume_url]
     );
 
@@ -78,7 +78,7 @@ const applyForJob = async (req, res) => {
         id: result.insertId,
         job_id,
         job_title: jobs[0].title,
-        status: 'pending'
+        status: 'pending_review'
       }
     });
   } catch (error) {
@@ -271,7 +271,7 @@ const withdrawApplication = async (req, res) => {
       });
     }
 
-    // Check if can be withdrawn (only pending or reviewed applications can be withdrawn)
+    // Check if can be withdrawn (before final employer decision)
     if (['accepted', 'rejected', 'withdrawn'].includes(applications[0].status)) {
       return res.status(400).json({
         success: false,
@@ -325,7 +325,8 @@ const getApplicationStats = async (req, res) => {
     const [stats] = await pool.query(
       `SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status IN ('pending', 'pending_review') THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
         SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
         SUM(CASE WHEN status = 'shortlisted' THEN 1 ELSE 0 END) as shortlisted,
         SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,

@@ -35,9 +35,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const loginPath = user?.role === 'admin' ? '/admin/login' : '/auth';
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/auth';
+      window.location.href = loginPath;
     }
     return Promise.reject(error);
   }
@@ -49,6 +51,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  adminLogin: (data) => api.post('/auth/admin/login', data),
   getMe: () => api.get('/auth/me'),
   updatePassword: (data) => api.put('/auth/password', data),
 };
@@ -125,21 +128,32 @@ export const adminAPI = {
   
   // User Management
   getAllUsers: (params) => api.get('/admin/users', { params }),
+  getAllStudents: (params) => api.get('/admin/students', { params }),
   getUserById: (id) => api.get(`/admin/users/${id}`),
   updateUserStatus: (id, status) => api.put(`/admin/users/${id}/status`, { status }),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  deleteStudentRecord: (userId) => api.delete(`/admin/students/${userId}`),
   
   // Employer Management
   getAllEmployers: (params) => api.get('/admin/employers', { params }),
   verifyEmployer: (id, is_verified) => api.put(`/admin/employers/${id}/verify`, { is_verified }),
+  deleteEmployerRecord: (userId) => api.delete(`/admin/employers/${userId}`),
   
   // Job Management
   getAllJobs: (params) => api.get('/admin/jobs', { params }),
+  getPendingJobs: () => api.get('/admin/jobs/pending'),
+  reviewJob: (id, data) => api.post(`/admin/jobs/${id}/review`, data),
   approveJob: (id, data) => api.put(`/admin/jobs/${id}/approve`, data),
   deleteJob: (id) => api.delete(`/admin/jobs/${id}`),
   
   // Application Management
   getAllApplications: (params) => api.get('/admin/applications', { params }),
+  getPendingApplications: () => api.get('/admin/applications/pending'),
+  reviewApplication: (id, data) => api.post(`/admin/applications/${id}/review`, data),
+
+  // Admin Management
+  getAdmins: () => api.get('/admin/admins'),
+  createAdmin: (data) => api.post('/admin/admins', data),
 };
 
 export default api;

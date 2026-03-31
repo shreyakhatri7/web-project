@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import EmployerAuth from './EmployerAuth';
 import EmployerDashboard from './EmployerDashboard';
 import PostJobForm from './PostJobForm';
 import ManageJobs from './ManageJobs';
 import ApplicantsList from './ApplicantsList';
+import EmployerProfile from './EmployerProfile';
 import './EmployerApp.css';
 
 const EmployerApp = () => {
@@ -12,28 +13,55 @@ const EmployerApp = () => {
     const [employer, setEmployer] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Check if employer is already logged in
-        const token = localStorage.getItem('employerToken');
+    const syncEmployerAuth = useCallback(() => {
+        const token = localStorage.getItem('employerToken') || localStorage.getItem('token');
         const employerData = localStorage.getItem('employerData');
-        
-        if (token && employerData) {
-            setIsAuthenticated(true);
-            setEmployer(JSON.parse(employerData));
+        const userData = localStorage.getItem('user');
+
+        if (!token) {
+            setIsAuthenticated(false);
+            setEmployer(null);
+            setLoading(false);
+            return;
         }
+
+        setIsAuthenticated(true);
+
+        try {
+            if (employerData) {
+                setEmployer(JSON.parse(employerData));
+            } else if (userData) {
+                const parsedUser = JSON.parse(userData);
+                const profile = parsedUser.profile || {};
+                setEmployer({
+                    ...profile,
+                    email: parsedUser.email,
+                });
+            } else {
+                setEmployer(null);
+            }
+        } catch (parseError) {
+            setEmployer(null);
+        }
+
         setLoading(false);
     }, []);
+
+    useEffect(() => {
+        syncEmployerAuth();
+
+        window.addEventListener('auth-change', syncEmployerAuth);
+        window.addEventListener('storage', syncEmployerAuth);
+
+        return () => {
+            window.removeEventListener('auth-change', syncEmployerAuth);
+            window.removeEventListener('storage', syncEmployerAuth);
+        };
+    }, [syncEmployerAuth]);
 
     const handleAuthSuccess = (employerData) => {
         setIsAuthenticated(true);
         setEmployer(employerData);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('employerToken');
-        localStorage.removeItem('employerData');
-        setIsAuthenticated(false);
-        setEmployer(null);
     };
 
     if (loading) {
@@ -46,81 +74,7 @@ const EmployerApp = () => {
 
     return (
         <div className="employer-app" style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <nav className="employer-navbar" style={{
-                background: '#2196f3',
-                padding: '15px 20px',
-                color: 'white',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-                <div className="navbar-brand">
-                    <h2 style={{ margin: '0', fontSize: '1.5rem' }}>📊 Employer Portal</h2>
-                    <span className="company-name" style={{ fontSize: '0.9rem', opacity: '0.9' }}>
-                        {employer.company_name}
-                    </span>
-                </div>
-                
-                <div className="navbar-links" style={{
-                    display: 'flex',
-                    gap: '20px'
-                }}>
-                    <Link to="/employer/dashboard" className="nav-link" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        padding: '8px 15px',
-                        borderRadius: '5px'
-                    }}>
-                        🏠 Dashboard
-                    </Link>
-                    <Link to="/employer/post-job" className="nav-link" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        padding: '8px 15px',
-                        borderRadius: '5px'
-                    }}>
-                        ➕ Post Job
-                    </Link>
-                    <Link to="/employer/jobs" className="nav-link" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        padding: '8px 15px',
-                        borderRadius: '5px'
-                    }}>
-                        💼 Manage Jobs
-                    </Link>
-                    <Link to="/employer/applicants" className="nav-link" style={{
-                        color: 'white',
-                        textDecoration: 'none',
-                        padding: '8px 15px',
-                        borderRadius: '5px'
-                    }}>
-                        👥 Applicants
-                    </Link>
-                </div>
-                
-                <div className="navbar-user" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '15px'
-                }}>
-                    <span className="user-email" style={{ fontSize: '0.9rem', opacity: '0.9' }}>
-                        {employer.email}
-                    </span>
-                    <button onClick={handleLogout} className="logout-btn" style={{
-                        background: '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 15px',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                    }}>
-                        🚪 Logout
-                    </button>
-                </div>
-            </nav>
+            
 
             <main className="employer-main" style={{
                 minHeight: 'calc(100vh - 120px)',
@@ -132,6 +86,7 @@ const EmployerApp = () => {
                     <Route path="post-job" element={<PostJobForm />} />
                     <Route path="jobs" element={<ManageJobs />} />
                     <Route path="applicants" element={<ApplicantsList />} />
+                    <Route path="profile" element={<EmployerProfile employer={employer} />} />
                     <Route path="jobs/:jobId/applicants" element={<ApplicantsList />} />
                 </Routes>
             </main>

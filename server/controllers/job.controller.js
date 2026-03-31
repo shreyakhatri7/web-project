@@ -6,6 +6,23 @@
 
 const { pool } = require('../config/db');
 
+const parseJsonSafe = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    // Keep legacy plain-text values readable instead of crashing the endpoint.
+    return value;
+  }
+};
+
 /**
  * Get all jobs with search and filters (for students/public)
  * GET /api/jobs
@@ -79,10 +96,10 @@ const getAllJobs = async (req, res) => {
 
     // Parse JSON fields for each job
     jobs.forEach(job => {
-      if (job.requirements) job.requirements = JSON.parse(job.requirements);
-      if (job.responsibilities) job.responsibilities = JSON.parse(job.responsibilities);
-      if (job.benefits) job.benefits = JSON.parse(job.benefits);
-      if (job.skills_required) job.skills_required = JSON.parse(job.skills_required);
+      job.requirements = parseJsonSafe(job.requirements);
+      job.responsibilities = parseJsonSafe(job.responsibilities);
+      job.benefits = parseJsonSafe(job.benefits);
+      job.skills_required = parseJsonSafe(job.skills_required);
     });
 
     // Get total count for pagination
@@ -171,10 +188,10 @@ const getJobById = async (req, res) => {
     const job = jobs[0];
 
     // Parse JSON fields
-    if (job.requirements) job.requirements = JSON.parse(job.requirements);
-    if (job.responsibilities) job.responsibilities = JSON.parse(job.responsibilities);
-    if (job.benefits) job.benefits = JSON.parse(job.benefits);
-    if (job.skills_required) job.skills_required = JSON.parse(job.skills_required);
+    job.requirements = parseJsonSafe(job.requirements);
+    job.responsibilities = parseJsonSafe(job.responsibilities);
+    job.benefits = parseJsonSafe(job.benefits);
+    job.skills_required = parseJsonSafe(job.skills_required);
 
     // Check if current user has applied (if authenticated and is a student)
     let hasApplied = false;

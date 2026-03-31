@@ -130,7 +130,7 @@ const createJob = async (req, res) => {
         employer_id, title, description, location, job_type, experience_level,
         salary_min, salary_max, requirements, responsibilities, benefits,
         skills_required, deadline, vacancies, status, is_approved
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', FALSE)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', FALSE)`,
       [
         employerId, title, description, location || null,
         job_type || 'full-time', experience_level || 'entry',
@@ -149,7 +149,7 @@ const createJob = async (req, res) => {
       job: {
         id: result.insertId,
         title,
-        status: 'pending'
+        status: 'pending_review'
       }
     });
   } catch (error) {
@@ -187,7 +187,11 @@ const getMyJobs = async (req, res) => {
 
     let query = `
       SELECT j.*, 
-             (SELECT COUNT(*) FROM applications WHERE job_id = j.id) as application_count
+             (
+               SELECT COUNT(*)
+               FROM applications
+               WHERE job_id = j.id AND status NOT IN ('pending', 'pending_review')
+             ) as application_count
       FROM jobs j
       WHERE j.employer_id = ?
     `;
@@ -259,7 +263,11 @@ const getJobById = async (req, res) => {
 
     const [jobs] = await pool.query(
       `SELECT j.*, 
-              (SELECT COUNT(*) FROM applications WHERE job_id = j.id) as application_count
+              (
+                SELECT COUNT(*)
+                FROM applications
+                WHERE job_id = j.id AND status NOT IN ('pending', 'pending_review')
+              ) as application_count
        FROM jobs j
        WHERE j.id = ? AND j.employer_id = ?`,
       [id, employers[0].id]
@@ -464,7 +472,7 @@ const getJobApplications = async (req, res) => {
       FROM applications a
       JOIN students s ON a.student_id = s.id
       JOIN users u ON s.user_id = u.id
-      WHERE a.job_id = ?
+      WHERE a.job_id = ? AND a.status NOT IN ('pending', 'pending_review')
     `;
     const params = [id];
 
@@ -489,7 +497,11 @@ const getJobApplications = async (req, res) => {
     });
 
     // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM applications WHERE job_id = ?';
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM applications
+      WHERE job_id = ? AND status NOT IN ('pending', 'pending_review')
+    `;
     const countParams = [id];
     if (status) {
       countQuery += ' AND status = ?';
@@ -610,7 +622,7 @@ const getDashboard = async (req, res) => {
       `SELECT 
         COUNT(*) as total_jobs,
         SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_jobs,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_jobs,
+        SUM(CASE WHEN status IN ('pending', 'pending_review') THEN 1 ELSE 0 END) as pending_jobs,
         SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed_jobs
        FROM jobs WHERE employer_id = ?`,
       [employerId]
@@ -619,8 +631,9 @@ const getDashboard = async (req, res) => {
     // Get application stats
     const [appStats] = await pool.query(
       `SELECT 
-        COUNT(*) as total_applications,
-        SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN a.status NOT IN ('pending', 'pending_review') THEN 1 ELSE 0 END) as total_applications,
+        SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) as approved,
         SUM(CASE WHEN a.status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
         SUM(CASE WHEN a.status = 'shortlisted' THEN 1 ELSE 0 END) as shortlisted,
         SUM(CASE WHEN a.status = 'accepted' THEN 1 ELSE 0 END) as accepted,
@@ -637,7 +650,7 @@ const getDashboard = async (req, res) => {
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        JOIN students s ON a.student_id = s.id
-       WHERE j.employer_id = ?
+        WHERE j.employer_id = ? AND a.status NOT IN ('pending', 'pending_review')
        ORDER BY a.created_at DESC
        LIMIT 5`,
       [employerId]

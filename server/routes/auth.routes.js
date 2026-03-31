@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getMe, updatePassword } = require('../controllers/auth.controller');
+const { register, login, adminLogin, getMe, updatePassword } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
 /**
@@ -17,6 +17,11 @@ router.post('/register', register);
 // @desc    Login user (any role)
 // @access  Public
 router.post('/login', login);
+
+// @route   POST /api/auth/admin/login
+// @desc    Login admin user only
+// @access  Public
+router.post('/admin/login', adminLogin);
 
 // @route   GET /api/auth/me
 // @desc    Get current logged in user
